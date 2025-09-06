@@ -7,7 +7,7 @@ Ele permite **inspecionar, registrar e manipular** tráfego HTTP/Socket em tempo
 
 ---
 
-## ✨ Funcionalidades
+## Funcionalidades
 
 - ✅ Intercepta chamadas `send/recv` e `WSASend/WSARecv` em aplicações.
 - ✅ Exibe todo tráfego enviado e recebido no console em tempo real.
