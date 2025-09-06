@@ -6,6 +6,7 @@ O **NetMimic** é uma DLL desenvolvida em C++ que utiliza *hooking* via [MinHook
 Ele permite **inspecionar, registrar e manipular** tráfego HTTP/Socket em tempo real, com base em regras configuradas pelo usuário.
 
 ---
+<img width="979" height="819" alt="image" src="https://github.com/user-attachments/assets/23051475-ad59-40a0-98a9-6d54c06d61fd" />
 
 ## Funcionalidades
 
