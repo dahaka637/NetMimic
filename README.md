@@ -1,84 +1,83 @@
 # NetMimic
 
-🔍 **Interceptador e adulterador de tráfego em nível de socket (Windows)**  
-O **NetMimic** é uma DLL desenvolvida em C++ que utiliza *hooking* via [MinHook](https://github.com/TsudaKageyu/minhook) para interceptar chamadas de rede (`send`, `recv`, `WSASend`, `WSARecv`) em aplicações Windows.  
+🔍 **Socket-Level Traffic Interceptor & Manipulator (Windows)**  
+**NetMimic** is a C++ DLL that leverages [MinHook](https://github.com/TsudaKageyu/minhook) to intercept Winsock API calls (`send`, `recv`, `WSASend`, `WSARecv`) inside Windows processes.
 
-Ele permite **inspecionar, registrar e manipular** tráfego HTTP/Socket em tempo real, com base em regras configuradas pelo usuário.
-
----
-<img width="979" height="819" alt="image" src="https://github.com/user-attachments/assets/23051475-ad59-40a0-98a9-6d54c06d61fd" />
-
-## Funcionalidades
-
-- ✅ Intercepta chamadas `send/recv` e `WSASend/WSARecv` em aplicações.
-- ✅ Exibe todo tráfego enviado e recebido no console em tempo real.
-- ✅ Suporte a **mimificação**:
-  - Bloqueia/envolve pacotes.
-  - Substitui mensagens de resposta por conteúdo adulterado.
-  - Regras definidas em arquivo `mimificado.map`.
-- ✅ Corrige automaticamente cabeçalhos **Content-Length** para evitar falhas.
-- ✅ Configuração simples em `config.ini`.
-- ✅ Gera logs (`original.log`) de todo tráfego original, se habilitado.
+It enables developers and researchers to **inspect, log, and modify** network traffic (e.g., HTTP over raw sockets) in real time according to configurable rules.
 
 ---
 
-## 📂 Estrutura do Projeto
+## ✨ Features
+
+- ✅ Hooks Winsock functions: `send`, `recv`, `WSASend`, `WSARecv`.
+- ✅ Console output of all intercepted traffic (sent & received).
+- ✅ **Mimification engine**:
+  - Block or alter packets in-flight.
+  - Replace responses with custom payloads.
+  - Rule-driven transformations via `mimificado.map`.
+- ✅ Automatic `Content-Length` recalculation to avoid protocol errors.
+- ✅ Configurable behavior through `config.ini`.
+- ✅ Optional persistent logging of all original traffic (`original.log`).
+
+---
+
+## 📂 Project Structure
 
 ```
 NetMimic/
-├── hook.cpp/.h       # Implementação dos hooks
-├── mimic.cpp/.h      # Sistema de regras de mimificação
-├── config.cpp/.h     # Gerenciamento do config.ini
-├── logger.cpp/.h     # Sistema de log
-├── utils.cpp/.h      # Funções auxiliares
-├── dllmain.cpp       # Ponto de entrada da DLL
-├── config.ini        # Arquivo de configuração
-└── mimificado.map    # Arquivo de regras de adulteração
+├── hook.cpp/.h       # Hooking logic (send/recv/WSA* wrappers)
+├── mimic.cpp/.h      # Rule processing (mimification engine)
+├── config.cpp/.h     # INI configuration management
+├── logger.cpp/.h     # Logging system
+├── utils.cpp/.h      # Utility functions
+├── dllmain.cpp       # DLL entry point
+├── config.ini        # Runtime configuration
+└── mimificado.map    # Rule definitions for manipulation
 ```
 
 ---
 
-## ⚙️ Instalação e Uso
+## ⚙️ Installation & Usage
 
-1. **Clone o repositório:**
+1. **Clone the repository:**
    ```bash
    git clone https://github.com/dahaka637/NetMimic.git
    cd NetMimic
    ```
 
-2. **Abra o projeto no Visual Studio**  
-   - Certifique-se de compilar como **DLL**.
-   - Plataforma: **x64** (ou x86 conforme o alvo).
-   - Link com `ws2_32.lib`.
+2. **Open in Visual Studio**
+   - Project type: **DLL**
+   - Target: **x64** (or x86 depending on the target process)
+   - Link with `ws2_32.lib`
 
-3. **Compile a DLL** → será gerada `NetMimic.dll`.
+3. **Build** → Generates `NetMimic.dll`.
 
-4. **Carregue a DLL no processo alvo**  
-   - Use um injetor de DLL (ex: [Process Hacker](https://processhacker.sourceforge.io/), [DLL Injector](https://github.com/OpenSecurityResearch/dllinjector)).
-   - Assim que a DLL for carregada, um **console** será aberto mostrando as mensagens interceptadas.
+4. **Inject the DLL into a target process**
+   - Example tools: [Process Hacker](https://processhacker.sourceforge.io/), [dllinjector](https://github.com/OpenSecurityResearch/dllinjector).
+   - On successful injection, a console window will appear showing intercepted traffic.
 
 ---
 
-## ⚙️ Configuração (`config.ini`)
+## ⚙️ Configuration (`config.ini`)
 
-Arquivo gerado automaticamente no primeiro uso:
+Automatically created on first execution:
 
 ```ini
-[GERAL]
-Interceptar=1
+[GENERAL]
+Intercept=1
 LogOriginal=1
 ```
 
-- **Interceptar**: `1` ativa a adulteração de tráfego, `0` apenas exibe/loga.  
-- **LogOriginal**: `1` grava todo tráfego interceptado em `original.log`.
+- **Intercept**: `1` enables packet manipulation; `0` only logs.
+- **LogOriginal**: `1` saves all original traffic into `original.log`.
 
 ---
 
-## 📝 Regras de Mimificação (`mimificado.map`)
+## 📝 Rule File (`mimificado.map`)
 
-As regras definem **quando e como adulterar mensagens**.  
-Formato básico:
+Defines conditions and transformations for traffic modification.
 
+### Syntax
 ```ini
 [ENVIADO]
 keyword1,keyword2
@@ -87,14 +86,13 @@ keyword1,keyword2
 {"status":"success","message":"Fake response","token":"abc123"}
 ```
 
-### Tipos suportados:
-- **[ENVIADO] -> [[ENVIADO]]**: substitui o pacote enviado.  
-- **[RECEBIDO] -> [[RECEBIDO]]**: substitui imediatamente o recebido.  
-- **[ENVIADO] -> [RECEBIDO]**: aguarda envio com palavras-chave → substitui próximo recebido.  
-- **[RECEBIDO] -> [RECEBIDO]**: substitui recebido diretamente.
+### Supported rule types
+- **[ENVIADO] → [[ENVIADO]]**: replace outgoing packet.
+- **[RECEBIDO] → [[RECEBIDO]]**: replace incoming packet.
+- **[ENVIADO] → [RECEBIDO]**: trigger on outgoing pattern → replace next response.
+- **[RECEBIDO] → [RECEBIDO]**: transform incoming packets directly.
 
-Exemplo prático:
-
+### Example
 ```ini
 [RECEBIDO]
 error,not found
@@ -102,12 +100,11 @@ error,not found
 [[RECEBIDO]]
 {"status":"success","message":"forced ok"}
 ```
-
-Esse exemplo transforma toda resposta que contenha `"error"` ou `"not found"` em um JSON de sucesso.
+This transforms any response containing `error` or `not found` into a success JSON.
 
 ---
 
-## 📊 Exemplo de Execução
+## 📊 Example Execution
 
 ```
 [SEND] (127 bytes)
@@ -117,8 +114,8 @@ Esse exemplo transforma toda resposta que contenha `"error"` ou `"not found"` em
 HTTP/1.1 200 OK
 Content-Type: application/json
 
-[Mimic] Bloqueando RECEBIDO e substituindo pelo fake.
-[INTERCEPTADO → RECV adulterado]
+[Mimic] Blocking RECEIVED and replacing with fake response.
+[INTERCEPTED → RECV modified]
 HTTP/1.1 200 OK
 Content-Type: application/json
 Content-Length: 120
@@ -128,14 +125,24 @@ Content-Length: 120
 
 ---
 
-## ⚠️ Aviso Legal
+## 📌 Notes & Best Practices
 
-Este projeto foi desenvolvido **apenas para fins educacionais e de pesquisa**.  
-O uso em sistemas de terceiros sem autorização pode ser ilegal.  
-Use o **NetMimic** com responsabilidade.
+- Interception occurs **before TLS decryption**. If the target process uses SSL/TLS, captured data will appear encrypted.
+- To analyze TLS traffic:
+  - Use a proxy (Burp Suite, Fiddler, mitmproxy), or
+  - Enable `SSLKEYLOGFILE` in the target process to export session keys for Wireshark.
+- Ideal use cases: debugging, protocol reverse engineering, educational research.
 
 ---
 
-## 📜 Licença
+## ⚠️ Legal Disclaimer
 
-MIT — Livre para uso, modificação e distribuição, mantendo os devidos créditos.
+This project is intended **only for educational and research purposes**.  
+Using NetMimic on software or systems without explicit permission may be illegal.  
+Always restrict usage to controlled environments or your own applications.
+
+---
+
+## 📜 License
+
+MIT License — Free to use, modify, and distribute with proper attribution.
